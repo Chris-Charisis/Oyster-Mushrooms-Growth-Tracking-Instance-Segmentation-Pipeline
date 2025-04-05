@@ -1,0 +1,34 @@
+# Use an official NVIDIA CUDA image with Python 3.8
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+
+# Set environment variables to avoid interactive prompts and upgrade pip
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y
+RUN apt-get update && apt-get install libgl1 -y
+RUN apt-get install pip sudo software-properties-common git curl -y
+
+# Set working directory
+WORKDIR /app
+
+# Instal MMDetections
+RUN pip install torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu118
+RUN pip install -U openmim==0.3.9
+RUN mim install mmengine==0.10.4
+RUN mim install mmcv==2.1.0
+RUN mim install mmdet==3.3.0
+RUN mim install mmpretrain==1.2.0
+
+# Copy requirements file and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install jupyter lab
+RUN pip install --no-cache-dir jupyterlab
+
+# Expose the Jupyter Lab port
+EXPOSE 8888
+
+# Set the default command to run Jupyter Lab
+CMD ["bash", "-c", "umask 0000 && jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''"]
+
+

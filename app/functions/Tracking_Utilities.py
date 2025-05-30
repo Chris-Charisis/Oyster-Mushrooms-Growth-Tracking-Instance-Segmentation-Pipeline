@@ -1,6 +1,7 @@
 from shapely.geometry import Polygon
 import numpy as np
 from Filtering_Utilities import dict_to_det_data_sample
+import cv2
 
 #Sorting clusters for tracking
 def cluster_sort(polygons,polygons_info,baseline,image_result):
@@ -19,6 +20,7 @@ def cluster_sort(polygons,polygons_info,baseline,image_result):
 					baseline.append([polygon,polygons_info[0][i]])
 				#Remove mature clusters
 				else:
+					# print("Mature cluster detected, removing from baseline: ", polygons_info[0][i])
 					to_delete.append(i)
 				i += 1
 			#New polygons/polygons info with mature clusters removed
@@ -37,7 +39,6 @@ def cluster_sort(polygons,polygons_info,baseline,image_result):
 		image_result["pred_instances"]["labels"] = np.delete(image_result["pred_instances"]["labels"],to_delete, axis=0)
 
 		image_result = dict_to_det_data_sample(image_result)
-
 		#Exit the function after establishing baseline or if no polygons
 		return polygons_cropped,polygons_info_cropped,baseline,image_result
 
@@ -63,19 +64,49 @@ def cluster_sort(polygons,polygons_info,baseline,image_result):
 
 	return polygons,polygons_info,baseline,image_result
 
+def mask_from_poly(poly, out_shape, scale=1.0):
+    """Rasterise polygon → boolean mask."""
+    poly = np.squeeze(poly).astype(np.int32)
+    poly = (poly * scale).astype(np.int32)
+    mask = np.zeros(out_shape, np.uint8)
+    cv2.fillPoly(mask, [poly], 1)
+    return mask.astype(bool)
+
+def raster_inter_union(polyA, polyB, resolution=1.0):
+    """
+    Approx. intersection + union areas at chosen resolution (pixels / unit).
+    """
+    # 1. find overall bounding box
+    both = np.vstack([polyA.reshape(-1, 2), polyB.reshape(-1, 2)])
+    xmin, ymin = both.min(0)
+    xmax, ymax = both.max(0)
+
+    w = int(np.ceil((xmax - xmin) * resolution)) + 3
+    h = int(np.ceil((ymax - ymin) * resolution)) + 3
+
+    # 2. translate coords to mask space
+    shift = np.array([[-xmin, -ymin]])
+    mA = mask_from_poly(polyA + shift, (h, w), resolution)
+    mB = mask_from_poly(polyB + shift, (h, w), resolution)
+
+    inter = np.logical_and(mA, mB).sum() / (resolution**2)
+    union = np.logical_or(mA, mB).sum()   / (resolution**2)
+    return inter, union
+
 #Calculating intersection over union for coordiante list 
 def coordinate_iou(poly,base):
 
-	poly1 = Polygon(poly).buffer(0)
-	poly2 = Polygon(base).buffer(0)
-
+	# poly1 = Polygon(poly).buffer(0)
+	# poly2 = Polygon(base).buffer(0)
+	intersect, union = raster_inter_union(poly, base, resolution=1.0)
 	#Getting intersection of both polygons
-	intersect = poly1.intersection(poly2).area
+	# intersect = poly1.intersection(poly2).area
+	# print(intersect, union)
 	if intersect == 0:
 		return 0
 	
 	#Getting union and intersection over union
-	union = poly1.union(poly2).area
+	# union = poly1.union(poly2).area
 	iou = intersect / union
 
 	return iou

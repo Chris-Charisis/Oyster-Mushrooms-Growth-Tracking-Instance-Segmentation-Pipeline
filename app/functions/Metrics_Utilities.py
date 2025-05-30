@@ -68,7 +68,7 @@ def annotation_tracking(file):
 
 ##Establishing cluster_segments excel file
 def establish_cluster_sizing(working_folder):
-    with open(working_folder + '/Cluster_Sizing.csv', 'w') as csv_file:
+    with open(working_folder + 'Cluster_Sizing.csv', 'w') as csv_file:
         #Creating the csv writer
         writer = csv.writer(csv_file)
         #Writing the first row with all the headers
@@ -79,7 +79,7 @@ def establish_cluster_sizing(working_folder):
 
 ##Establishing csv file for multiple object tracking accuracy
 def establish_mota(working_folder):
-    with open(working_folder + '/MOTA_Metrics.csv', 'w') as csv_file:
+    with open(working_folder + 'MOTA_Metrics.csv', 'w') as csv_file:
         #Creating the csv writer
         writer = csv.writer(csv_file)
         #Writing the first row with all the headers
@@ -434,7 +434,8 @@ def get_tracking_metrics(annotations,polygons,mota_metrics_50, motaTracker_50):
 
 ##Writing information from cluster_segments to excel file
 def write_cluster_sizing(segment,working_folder,test_img,img_num):
-    with open(working_folder + '/Cluster_Sizing.csv', 'a') as csv_file:
+    with open(working_folder + 'Cluster_Sizing.csv', 'a') as csv_file:
+        print(csv_file)
         #Creating the csv writer
         writer = csv.writer(csv_file,lineterminator='\n')
         #Writing new row

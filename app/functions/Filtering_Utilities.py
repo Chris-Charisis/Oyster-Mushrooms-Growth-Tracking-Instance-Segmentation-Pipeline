@@ -41,7 +41,7 @@ def calculate_brightness(im_file):
     return math.sqrt(0.241*(r**2) + 0.691*(g**2) + 0.068*(b**2))
 
 #check if brightness outlier exists
-def brightness_filter(test_img,path_to_image,last_valid_ema,last_valid_residuals,alpha=0.1,z_thresh=30,residual_window_size=5):
+def brightness_filter(path_to_image,last_valid_ema,last_valid_residuals,alpha=0.1,z_thresh=30,residual_window_size=5):
     # Calculate brightness value
     brightness = calculate_brightness(path_to_image)
 
@@ -60,12 +60,11 @@ def brightness_filter(test_img,path_to_image,last_valid_ema,last_valid_residuals
         std = np.std(residuals_to_use)
         z = (residual - mean) / std if std > 0 else 0.0
         is_outlier = z > z_thresh
-        # print(z, test_img, brightness, ema)
     else:
         is_outlier = False
 
     if is_outlier:
-        print("Image with outlier brightness detected and skipped: ", test_img)
+        print("Image with outlier brightness detected and skipped: ", path_to_image)
         print("--------------------------------------------")
         # Do not update EMA or residuals
         return True, last_valid_ema, last_valid_residuals
@@ -167,15 +166,16 @@ def expand_box(box, scale_factor):
 
 
 ##Filter out erroneous cluster predictions from background and residual areas from harvesting
-def delete_post_background_clusters(img_num,result,substrate_result, post_harvest_polygons_info_base,iou_threshold,verbose=False):
+def delete_post_background_clusters(result,substrate_result, post_harvest_polygons_info_base,iou_threshold,verbose=False):
     result = result.cpu().numpy().to_dict()
     substrate_bbox = expand_box(substrate_result.cpu()["bboxes"][0],0.05)
-    
+    # print("Substrate result:", substrate_result)
+    # print(substrate_bbox)
     to_delete = []
     for idy in range(len(result["pred_instances"]["bboxes"])):
         prediction_bbox = torch.tensor([result["pred_instances"]["bboxes"][idy]], dtype=torch.float)
         substrate_iou = bops.box_iou(substrate_bbox, prediction_bbox)
-            #First check is to have common area with the expanded substrate, this filters out the far away instances
+        #First check is to have common area with the expanded substrate, this filters out the far away instances
         if substrate_iou==0 and not post_harvest_polygons_info_base:
             to_delete.append(idy)
             continue

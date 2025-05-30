@@ -3,10 +3,10 @@
 #Tracking clusters and cluster information
 post_filtering_polygons = []
 post_filtering_polygons_info = []
-metrics_post_filtering_polygons = []
-metrics_post_filtering_polygons_info = []
-pre_filtering_polygons = []
-pre_filtering_polygons_info = []
+# metrics_post_filtering_polygons = []
+# metrics_post_filtering_polygons_info = []
+# pre_filtering_polygons = []
+# pre_filtering_polygons_info = []
 post_harvest_post_filtering_polygons_info_base = []
 
 #Baseline for tracking
@@ -22,14 +22,14 @@ detected_height_pixels = []
 
 #Tracking MOTA Metrics
 #False Positive, False Negative, ID Switch, Ground Truth
-mota_metric = [[],[],[],[]]
-motaTracker = []
+# mota_metric = [[],[],[],[]]
+# motaTracker = []
 
 #From the farm substrate (50 cm x 36cm x 19cm)
-# substrate_real_width = 50
-# substrate_real_height = 36
-substrate_real_width = 33
-substrate_real_height = 28.5
+substrate_real_width = 50
+substrate_real_height = 36
+# substrate_real_width = 33
+# substrate_real_height = 28.5
 
 #Select which class(es) of clusters to be cropped as separate images
 #Set to -1 to crop all classes, else class numbers based on COCO annotations are from 0,1,2 etc.
@@ -43,8 +43,8 @@ crop_cluster_option = False
 save_substrate_bbox_image = False
 #Save images with reference bbox(es)
 save_reference_bbox_image = False
-#Save images with original prediction ids before tracking
-save_untracked = False
+# #Save images with original prediction ids before tracking
+# save_untracked = False
 
 #Confidence thresholds
 confidence_score_threshold = 0.2
@@ -53,3 +53,23 @@ post_harvest_occluded_iou_overlap = 0.7
 
 #Print filtering actions on detected clusters
 # verbose = True
+CONFIG_VARIABLES = {
+    "post_filtering_polygons" : [],
+    "post_filtering_polygons_info" : [],
+    "post_harvest_post_filtering_polygons_info_base" : [],
+    "baseline" : [],
+    "last_valid_brightness_ema" : None,
+    "last_valid_brightness_residuals" : [],
+    "detected_width_pixels" : [],
+    "detected_height_pixels" : [],
+    "substrate_real_width" : 50,
+    "substrate_real_height" : 36,
+    "labels_to_crop" : [1],
+    "cluster_sizing_option" : True,
+    "crop_cluster_option" : False,
+    "save_substrate_bbox_image" : True,
+    "save_reference_bbox_image" : False,
+    "confidence_score_threshold" : 0.2,
+    "overlapping_iou_threshold" : 0.3,
+    "post_harvest_occluded_iou_overlap" : 0.7
+}

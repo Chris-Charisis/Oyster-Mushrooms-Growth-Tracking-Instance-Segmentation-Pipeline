@@ -19,16 +19,9 @@ RUN mim install mmdet==3.3.0
 RUN mim install mmpretrain==1.2.0
 
 # Copy requirements file and install dependencies
-COPY requirements.txt .
+COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install jupyter lab
-RUN pip install --no-cache-dir jupyterlab
+EXPOSE 8080
 
-# Expose the Jupyter Lab port
-EXPOSE 8888
-
-# Set the default command to run Jupyter Lab
-CMD ["bash", "-c", "umask 0000 && jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''"]
-
-
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]

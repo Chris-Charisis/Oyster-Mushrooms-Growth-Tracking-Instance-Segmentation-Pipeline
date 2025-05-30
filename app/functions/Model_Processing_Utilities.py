@@ -46,7 +46,7 @@ def load_models(mushroom_model_config_folder,substrate_model_config_folder,refer
 	return mushroom_model,substrate_model,reference_model,visualizer
 
 ##Process substrate, calculate size and save results
-def process_substrate(substrate_model,reference_model,img,image_for_visualization,save_substrate_bbox_image,save_reference_bbox_image,working_folder,test_img,detected_width_pixels,detected_height_pixels):
+def process_substrate(substrate_model,reference_model,img,save_substrate_bbox_image,save_reference_bbox_image,working_folder,test_img,detected_width_pixels,detected_height_pixels):
 	#Substrate segmentation inference
 	substrate_result = inference_detector(substrate_model, img).pred_instances.cpu().numpy()
 
@@ -73,7 +73,7 @@ def process_substrate(substrate_model,reference_model,img,image_for_visualizatio
 		for result in substrate_result:
 			sub_result = result["bboxes"][0]
 			cv2.rectangle(substrate_img,(int(sub_result[0]),int(sub_result[1])),(int(sub_result[2]),int(sub_result[3])),(0,0,255),5)
-
+			break
 		#Save substrate images
 		cv2.imwrite(working_folder + "/Substrate/substrate_" + test_img, substrate_img)
 		

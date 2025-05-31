@@ -185,5 +185,5 @@ results/
 # Model weigths and config
 *.pth
 *_config.py
-custom_config*.py
+custom_config*
 *.zip

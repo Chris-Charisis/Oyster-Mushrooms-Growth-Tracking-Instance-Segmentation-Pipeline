@@ -141,7 +141,8 @@ def polygon_sort(polygons,polygons_info,baseline,iou_baseline = 0.2):
 		
 		#Setting best fit box 
 		if iou_max == 1:
-			temp[i] = [[0],[0]]
+			# temp[i] = [[0],[0]]
+			temp[i] = best_fit
 		elif iou_max > iou_baseline:
 			temp[i] = best_fit
 		else:

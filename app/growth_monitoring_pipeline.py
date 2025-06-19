@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
     app.state.config_variables = copy.deepcopy(CONFIG_VARIABLES)  
     app.state.PATHS = copy.deepcopy(PATHS)
     now = datetime.now() # current date and time
-    date_time = now.strftime("%Y_%m_%d_%H")
+    date_time = now.strftime("%Y_%m_%d_%H_%M_%S")
     app.state.PATHS["working_folder"] += date_time + "/"
     initialize_workspace(app.state.PATHS["working_folder"])
     establish_cluster_sizing(app.state.PATHS["working_folder"])
@@ -72,7 +72,7 @@ async def hard_reset(app: FastAPI):
         # Generate a unique folder name based on the current date and time
         # This ensures that each reset creates a new working folder
         # and does not overwrite previous results.
-        date_time = now.strftime("%Y_%m_%d_%H")
+        date_time = now.strftime("%Y_%m_%d_%H_%M_%S")
         app.state.PATHS["working_folder"] += date_time + "/"
 
         # 2. Initialize workspace
@@ -295,6 +295,7 @@ async def process_image(url: str = Form(...)):
         pred_path   = pathlib.Path(app.state.PATHS["working_folder"] + "Predictions/after_filtering_predictions_downloaded_image_" + str(app.state.time_interval) + ".png")
         tracked_path   = pathlib.Path(app.state.PATHS["working_folder"] + "Tracked/tracked_after_filtering_predictions_downloaded_image_" + str(app.state.time_interval) + ".png")
         curves_path = pathlib.Path(app.state.PATHS["working_folder"] + "clusters_relative_area.png")
+        csv_path = pathlib.Path(app.state.PATHS["working_folder"] + "Cluster_Sizing.csv")
 
         # Increment the time interval for the next request
         app.state.time_interval += 1
@@ -305,6 +306,7 @@ async def process_image(url: str = Form(...)):
             zf.write(pred_path,   arcname="prediction.png")
             zf.write(curves_path, arcname="curves.png")
             zf.write(tracked_path, arcname="tracked.png")
+            zf.write(csv_path, arcname="cluster_growth.csv")            
         buf.seek(0)
 
         # Set the headers for the response to indicate a file download

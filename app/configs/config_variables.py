@@ -67,7 +67,7 @@ CONFIG_VARIABLES = {
     "labels_to_crop" : [1],
     "cluster_sizing_option" : True,
     "crop_cluster_option" : False,
-    "save_substrate_bbox_image" : True,
+    "save_substrate_bbox_image" : False,
     "save_reference_bbox_image" : False,
     "confidence_score_threshold" : 0.2,
     "overlapping_iou_threshold" : 0.3,

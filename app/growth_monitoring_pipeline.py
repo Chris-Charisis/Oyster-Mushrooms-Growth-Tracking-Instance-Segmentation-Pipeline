@@ -300,6 +300,9 @@ async def process_image(url: str = Form(...)):
         # Increment the time interval for the next request
         app.state.time_interval += 1
 
+        original_image_name = url.split("/")[-1]
+        original_image_name = original_image_name.split(".")[0]  # Remove the file extension
+        
         # build an in-memory zip
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, mode="w") as zf:
@@ -310,7 +313,7 @@ async def process_image(url: str = Form(...)):
         buf.seek(0)
 
         # Set the headers for the response to indicate a file download
-        headers = {"Content-Disposition": 'attachment; filename="results_' + str(app.state.time_interval) + '.zip"'}
+        headers = {"Content-Disposition": 'attachment; filename="' + original_image_name + '.zip"'}
         return StreamingResponse(
             buf,
             media_type="application/zip",

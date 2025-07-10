@@ -7,14 +7,14 @@ import zipfile
 import pathlib
 import mmcv
 from mmdet.apis import inference_detector
-from fastapi import FastAPI, Form, HTTPException,status
+from fastapi import FastAPI, Form, HTTPException, Response, status
 import asyncio
 from contextlib import asynccontextmanager
 from starlette.middleware.cors import CORSMiddleware
 import requests
 from PIL import Image
 from io import BytesIO
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from datetime import datetime
 from dotenv import dotenv_values
 
@@ -92,27 +92,28 @@ async def reset_workspace(token: str = Form(...)):
     config = dotenv_values(".env")
     # Simple token validation
     if token != config["RESET_TOKEN"]:
-        return {
-            "status_code": status.HTTP_401_UNAUTHORIZED,
-            "message": "Unauthorized access. Invalid token."
-        }
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized access. Invalid token."
+        )
 
     # Check if the reset lock is already acquired
     # This prevents multiple reset requests from being processed simultaneously
     if app.state.reset_lock.locked():
         # Optional ‘Retry-After’ header to help the caller automate retries
-        return {
-            "status_code" : status.HTTP_409_CONFLICT,
-            "message" : "Workspace is busy (reset in progress or frames queuing). Retry-After: 15 seconds.",
-        }
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Workspace is busy (reset in progress or frames queuing). Retry-After: 15 seconds."
+        )        
 
     # If the lock is not acquired, proceed with the hard reset
     await hard_reset(app)
+    
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={"message": "Workspace reset completed."}
+    )
 
-    return {
-        "status_code" : status.HTTP_200_OK, 
-        "message": "Workspace reset completed."
-    }
 
 # Define the image processing endpoint
 @app.post("/process_image/")
@@ -136,9 +137,10 @@ async def process_image(url: str = Form(...)):
         img = mmcv.imread(path_to_image) 
 
     except requests.exceptions.RequestException as e:
-        return {
-            "status_code": status.HTTP_400_BAD_REQUEST,
-            "message": f"Failed to download image from URL: {str(e)}"}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to download image from URL: {str(e)}"
+        )                
     
     try:
         # Check if the image is a brightness outlier
@@ -151,10 +153,8 @@ async def process_image(url: str = Form(...)):
             app.state.config_variables["post_filtering_polygons"].append([[0]])
             app.state.config_variables["post_filtering_polygons_info"].append([[0]])
             app.state.time_interval += 1
-            return {
-                "status_code": status.HTTP_204_NO_CONTENT,
-                "message": "Image skipped due to brightness filtering."
-            }
+
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
         
 
         # Color correction of the images for visualization
@@ -180,10 +180,8 @@ async def process_image(url: str = Form(...)):
             print("No confident predictions were found.")
             print("--------------------------------------------")
             app.state.time_interval += 1
-            return {
-                "status_code": status.HTTP_204_NO_CONTENT,
-                "message": "No confident predictions were found after filtering."
-            }
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
+
         image_result = delete_overlapping_with_lower_confidence(image_result,
                                                                 app.state.config_variables["overlapping_iou_threshold"])
         image_result = delete_post_background_clusters(image_result,
@@ -222,12 +220,7 @@ async def process_image(url: str = Form(...)):
             print("No valid predictions remain after filtering.")
             print("--------------------------------------------")
             app.state.time_interval += 1
-            return {
-                "status_code": status.HTTP_204_NO_CONTENT,
-                "message": "No valid predictions remain after full filtering.",
-                "prediction": None,
-                "curves": None
-            }
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
 
         # Visualize predictions after filtering
         app.state.visualizer.add_datasample(
@@ -321,10 +314,11 @@ async def process_image(url: str = Form(...)):
             status_code=status.HTTP_200_OK)
     
     except Exception as e:
-        return {
-            "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
-            "message": f"An error occurred during image processing: {str(e)}"
-        }
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred during image processing: {str(e)}"
+        )             
+    
 
 if __name__ == "__main__":
     import uvicorn
